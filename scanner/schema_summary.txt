@@ -1,0 +1,29 @@
+AVAILABLE QUERY ENTRY POINTS (use ONLY these as top-level queries):
+  - pastes(public: Boolean, limit: Int, filter: String) -> PasteObject
+  - paste(id: Int, title: String) -> PasteObject
+  - systemUpdate(no arguments) -> String
+  - systemDiagnostics(username: String, password: String, cmd: String) -> String
+  - systemDebug(arg: String) -> String
+  - systemHealth(no arguments) -> String
+  - users(id: Int) -> UserObject
+  - readAndBurn(id: Int) -> PasteObject
+  - search(keyword: String) -> SearchResult
+  - audits(no arguments) -> AuditObject
+  - deleteAllPastes(no arguments) -> Boolean
+  - me(token: String) -> UserObject
+
+OBJECT TYPES AND THEIR FIELDS (use these field names only):
+  - Query: pastes, paste, systemUpdate, systemDiagnostics, systemDebug, systemHealth, users, readAndBurn, search, audits, deleteAllPastes, me
+  - PasteObject: id, title, content, public, userAgent, ipAddr, ownerId, burn, owner
+  - OwnerObject: id, name, paste, pastes
+  - UserObject: id, username, password
+  - AuditObject: id, gqloperation, gqlquery, timestamp
+  - Mutations: createPaste, editPaste, deletePaste, uploadPaste, importPaste, createUser, login
+  - CreatePaste: paste
+  - EditPaste: paste
+  - DeletePaste: result
+  - UploadPaste: content, filename, result
+  - ImportPaste: result
+  - CreateUser: user
+  - Login: accessToken, refreshToken
+  - Subscription: paste

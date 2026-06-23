@@ -1,3 +1,5 @@
+from introspection import get_schema, build_schema_summary
+
 import requests
 import json
 
@@ -6,28 +8,40 @@ MODEL = "llama3"
 
 BOLA_PROMPT = """You are a GraphQL penetration tester specialising in Broken Object Level Authorisation (BOLA/IDOR).
 
-Given this GraphQL schema:
+The target's real schema is described below:
 {schema}
 
 Generate {n} attack test cases targeting BOLA vulnerabilities.
 Rules:
-- Attempt to access objects belonging to another user by manipulating ID arguments
-- Use unauthorised ID values (if context user is ID 1, try ID 2, 3, 999)
-- Target fields likely containing sensitive data (email, password, address, token)
+- Use ONLY the query entry points listed above as top-level queries. Do not invent fields.
+- Use ONLY the argument names each entry point actually accepts.
+- Use ONLY field names listed under each object type.
+- Attempt to access objects belonging to another user by manipulating ID-like arguments (try 2, 3, 999).
+- Prioritise entry points returning sensitive fields (password, token, content, gqlquery).
+- Every query must be valid, executable GraphQL. Never use "..." or placeholders.
 
 Respond ONLY with a valid JSON array. No explanation. No markdown. No code fences.
 Each object must have exactly these keys: id, attack_class, target_type, target_field, query, rationale, expected_indicator.
 
-Example:
-[{{"id":"bola_001","attack_class":"BOLA","target_type":"User","target_field":"email","query":"{{ user(id: 2) {{ email }} }}","rationale":"Attempts horizontal privilege escalation via direct object reference","expected_indicator":"200 with unauthorised data OR 403"}}]
+Example (format only; use the real schema above for actual queries):
+[{{"id":"bola_001","attack_class":"BOLA","target_type":"UserObject","target_field":"password","query":"{{ users(id: 2) {{ username password }} }}","rationale":"Attempts horizontal access to another user's record via the users entry point","expected_indicator":"200 with another user's data"}}]
 """
 
 RESOURCE_EXHAUSTION_PROMPT = """You are a GraphQL penetration tester specialising in resource exhaustion attacks.
 
-Given this GraphQL schema:
+The target's real schema is described below:
 {schema}
 
-Generate {n} attack test cases targeting resource exhaustion via: nested query depth abuse, field duplication, and batched query floods.
+Generate {n} attack test cases targeting resource exhaustion.
+Techniques to use:
+- Nested query depth abuse: follow real relationships between object types to nest deeply (e.g. an object that returns another object that returns the first). Use the fields listed under each type to chain them.
+- Field duplication: repeat a real field many times in one query.
+- Aliased query flooding: request the same real entry point many times using GraphQL aliases (a1: paste(...) a2: paste(...)).
+
+Rules:
+- Use ONLY the query entry points and field names from the schema above.
+- A nested-depth case MUST actually be nested across real relationships, not a flat query.
+- Every query must be valid, executable GraphQL. Never use "..." or placeholders.
 
 Respond ONLY with a valid JSON array. No explanation. No markdown. No code fences.
 Each object must have exactly these keys: id, attack_class, target_type, target_field, query, rationale, expected_indicator.
@@ -61,7 +75,7 @@ def parse_llm_output(raw: str) -> list:
     return json.loads(raw)
 
 def generate_attack_queries(schema: dict, attack_class: str, n: int = 5) -> list:
-    schema_str = json.dumps(schema, indent=2)
+    schema_str = build_schema_summary(schema)
     
     if attack_class == "BOLA":
         prompt = BOLA_PROMPT.format(schema=schema_str, n=n)
