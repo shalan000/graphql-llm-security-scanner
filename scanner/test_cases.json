@@ -1,0 +1,92 @@
+[
+  {
+    "id": "bola_001",
+    "attack_class": "BOLA",
+    "target_type": "User",
+    "target_field": "email",
+    "query": "{ user(id: 2) { email } }",
+    "rationale": "Attempts horizontal privilege escalation via direct object reference",
+    "expected_indicator": "200 with unauthorised data OR 403"
+  },
+  {
+    "id": "bola_002",
+    "attack_class": "BOLA",
+    "target_type": "PasteObject",
+    "target_field": "content",
+    "query": "{ paste(id: 3) { content } }",
+    "rationale": "Attempts to access sensitive paste contents via direct object reference",
+    "expected_indicator": "200 with unauthorised data OR 403"
+  },
+  {
+    "id": "bola_003",
+    "attack_class": "BOLA",
+    "target_type": "OwnerObject",
+    "target_field": "name",
+    "query": "{ owner(id: 999) { name } }",
+    "rationale": "Attempts to access sensitive owner information via direct object reference",
+    "expected_indicator": "200 with unauthorised data OR 403"
+  },
+  {
+    "id": "bola_004",
+    "attack_class": "BOLA",
+    "target_type": "AuditObject",
+    "target_field": "gqlquery",
+    "query": "{ audit(id: 2) { gqlquery } }",
+    "rationale": "Attempts to access sensitive audit logs via direct object reference",
+    "expected_indicator": "200 with unauthorised data OR 403"
+  },
+  {
+    "id": "bola_005",
+    "attack_class": "BOLA",
+    "target_type": "UserObject",
+    "target_field": "password",
+    "query": "{ user(id: 3) { password } }",
+    "rationale": "Attempts to access sensitive user credentials via direct object reference",
+    "expected_indicator": "200 with unauthorised data OR 403"
+  },
+  {
+    "id": 1,
+    "attack_class": "NestedQueryDepthAbuse",
+    "target_type": "PasteObject",
+    "target_field": "content",
+    "query": "{ paste { content } }",
+    "rationale": "Excessive nesting of queries to consume server resources",
+    "expected_indicator": "Increased CPU usage"
+  },
+  {
+    "id": 2,
+    "attack_class": "FieldDuplication",
+    "target_type": "UserObject",
+    "target_field": "username",
+    "query": "{ user { username username } }",
+    "rationale": "Repeatedly querying the same field to consume server resources",
+    "expected_indicator": "Increased memory usage"
+  },
+  {
+    "id": 3,
+    "attack_class": "BatchedQueryFlood",
+    "target_type": null,
+    "target_field": null,
+    "query": "[{ query: { paste { id } } }, { query: { paste { id } } }, ...]",
+    "rationale": "Sending a large number of queries in rapid succession to overwhelm server resources",
+    "expected_indicator": "Increased network traffic and CPU usage"
+  },
+  {
+    "id": 4,
+    "attack_class": "NestedQueryDepthAbuse",
+    "target_type": "OwnerObject",
+    "target_field": "pastes",
+    "query": "{ owner { name } }",
+    "rationale": "Excessive nesting of queries to consume server resources",
+    "expected_indicator": "Increased CPU usage"
+  },
+  {
+    "id": 5,
+    "attack_class": "BatchedQueryFlood",
+    "target_type": null,
+    "target_field": null,
+    "query": "[{ query: { systemUpdate } }, { query: { systemDiagnostics } }, ...]",
+    "rationale": "Sending a large number of queries in rapid succession to overwhelm server resources",
+    "expected_indicator": "Increased network traffic and CPU usage"
+  }
+]
