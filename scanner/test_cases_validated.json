@@ -1,0 +1,159 @@
+{
+  "summary": {
+    "total": 10,
+    "valid": 5,
+    "invalid": 5
+  },
+  "cases": [
+    {
+      "id": "bola_001",
+      "attack_class": "BOLA",
+      "target_type": "UserObject",
+      "target_field": "password",
+      "query": "{ me(token: \"invalid_token\") { username password } }",
+      "rationale": "Attempts to access another user's record via the me entry point with an invalid token",
+      "expected_indicator": "200 with another user's data",
+      "validation": {
+        "valid": true,
+        "level": "ok",
+        "errors": []
+      }
+    },
+    {
+      "id": "bola_002",
+      "attack_class": "BOLA",
+      "target_type": "PasteObject",
+      "target_field": "content",
+      "query": "{ readAndBurn(id: 3) { id title content } }",
+      "rationale": "Attempts to access a paste belonging to another user via the readAndBurn entry point",
+      "expected_indicator": "200 with another user's data",
+      "validation": {
+        "valid": true,
+        "level": "ok",
+        "errors": []
+      }
+    },
+    {
+      "id": "bola_003",
+      "attack_class": "BOLA",
+      "target_type": "AuditObject",
+      "target_field": "gqlquery",
+      "query": "{ audits { id gqlquery } }",
+      "rationale": "Attempts to access audit logs belonging to another user via the audits entry point",
+      "expected_indicator": "200 with another user's data",
+      "validation": {
+        "valid": true,
+        "level": "ok",
+        "errors": []
+      }
+    },
+    {
+      "id": "bola_004",
+      "attack_class": "BOLA",
+      "target_type": "PasteObject",
+      "target_field": "public",
+      "query": "{ paste(id: 999) { id title public } }",
+      "rationale": "Attempts to access a non-existent or unauthorized paste via the paste entry point",
+      "expected_indicator": "404 or 403",
+      "validation": {
+        "valid": true,
+        "level": "ok",
+        "errors": []
+      }
+    },
+    {
+      "id": "bola_005",
+      "attack_class": "BOLA",
+      "target_type": "UserObject",
+      "target_field": "username",
+      "query": "{ users(id: 3) { id username } }",
+      "rationale": "Attempts to access another user's record via the users entry point",
+      "expected_indicator": "200 with another user's data",
+      "validation": {
+        "valid": true,
+        "level": "ok",
+        "errors": []
+      }
+    },
+    {
+      "id": 1,
+      "attack_class": "Nested Query Depth Abuse",
+      "target_type": "PasteObject",
+      "target_field": "owner",
+      "query": "paste(id: 123) { owner { paste { id } } }",
+      "rationale": "Follow real relationships between PasteObject and OwnerObject to nest deeply.",
+      "expected_indicator": "High CPU usage",
+      "validation": {
+        "valid": false,
+        "level": "syntax",
+        "errors": [
+          "Syntax Error: Unexpected Name 'paste'.\n\nGraphQL request:1:1\n1 | paste(id: 123) { owner { paste { id } } }\n  | ^"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "attack_class": "Field Duplication",
+      "target_type": "PasteObject",
+      "target_field": "content",
+      "query": "paste(id: 123) { content, content, content, content }",
+      "rationale": "Repeat a real field many times in one query.",
+      "expected_indicator": "High memory usage",
+      "validation": {
+        "valid": false,
+        "level": "syntax",
+        "errors": [
+          "Syntax Error: Unexpected Name 'paste'.\n\nGraphQL request:1:1\n1 | paste(id: 123) { content, content, content, content }\n  | ^"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "attack_class": "Aliased Query Flooding",
+      "target_type": "Query",
+      "target_field": null,
+      "query": "a1: paste(id: 123), a2: paste(id: 456), a3: paste(id: 789)",
+      "rationale": "Request the same real entry point many times using GraphQL aliases.",
+      "expected_indicator": "High network traffic",
+      "validation": {
+        "valid": false,
+        "level": "syntax",
+        "errors": [
+          "Syntax Error: Unexpected Name 'a1'.\n\nGraphQL request:1:1\n1 | a1: paste(id: 123), a2: paste(id: 456), a3: paste(id: 789)\n  | ^"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "attack_class": "Nested Query Depth Abuse",
+      "target_type": "UserObject",
+      "target_field": "pastes",
+      "query": "me(token: \"abc\") { user { pastes { id } } }",
+      "rationale": "Follow real relationships between UserObject and PasteObject to nest deeply.",
+      "expected_indicator": "High CPU usage",
+      "validation": {
+        "valid": false,
+        "level": "syntax",
+        "errors": [
+          "Syntax Error: Unexpected Name 'me'.\n\nGraphQL request:1:1\n1 | me(token: \"abc\") { user { pastes { id } } }\n  | ^"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "attack_class": "Field Duplication",
+      "target_type": "AuditObject",
+      "target_field": "gqloperation",
+      "query": "audits { gqloperation, gqloperation, gqloperation }",
+      "rationale": "Repeat a real field many times in one query.",
+      "expected_indicator": "High memory usage",
+      "validation": {
+        "valid": false,
+        "level": "syntax",
+        "errors": [
+          "Syntax Error: Unexpected Name 'audits'.\n\nGraphQL request:1:1\n1 | audits { gqloperation, gqloperation, gqloperation }\n  | ^"
+        ]
+      }
+    }
+  ]
+}
