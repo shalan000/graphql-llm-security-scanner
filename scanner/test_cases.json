@@ -4,8 +4,8 @@
     "attack_class": "BOLA",
     "target_type": "UserObject",
     "target_field": "password",
-    "query": "{ me(token: \"invalid_token\") { username password } }",
-    "rationale": "Attempts to access another user's record via the me entry point with an invalid token",
+    "query": "{ me(token: \"abc\") { username password } }",
+    "rationale": "Attempts to access another user's token and password via the me entry point",
     "expected_indicator": "200 with another user's data"
   },
   {
@@ -23,15 +23,15 @@
     "target_type": "AuditObject",
     "target_field": "gqlquery",
     "query": "{ audits { id gqlquery } }",
-    "rationale": "Attempts to access audit logs belonging to another user via the audits entry point",
-    "expected_indicator": "200 with another user's data"
+    "rationale": "Attempts to access sensitive audit information via the audits entry point",
+    "expected_indicator": "200 with sensitive data"
   },
   {
     "id": "bola_004",
     "attack_class": "BOLA",
     "target_type": "PasteObject",
-    "target_field": "public",
-    "query": "{ paste(id: 999) { id title public } }",
+    "target_field": "content",
+    "query": "{ paste(id: 999) { id title content } }",
     "rationale": "Attempts to access a non-existent or unauthorized paste via the paste entry point",
     "expected_indicator": "404 or 403"
   },
@@ -39,54 +39,54 @@
     "id": "bola_005",
     "attack_class": "BOLA",
     "target_type": "UserObject",
-    "target_field": "username",
-    "query": "{ users(id: 3) { id username } }",
-    "rationale": "Attempts to access another user's record via the users entry point",
+    "target_field": "password",
+    "query": "{ users(id: 3) { username password } }",
+    "rationale": "Attempts horizontal access to another user's record via the users entry point",
     "expected_indicator": "200 with another user's data"
   },
   {
-    "id": 1,
+    "id": "re_001",
     "attack_class": "Nested Query Depth Abuse",
-    "target_type": "PasteObject",
-    "target_field": "owner",
-    "query": "paste(id: 123) { owner { paste { id } } }",
-    "rationale": "Follow real relationships between PasteObject and OwnerObject to nest deeply.",
-    "expected_indicator": "High CPU usage"
-  },
-  {
-    "id": 2,
-    "attack_class": "Field Duplication",
     "target_type": "PasteObject",
     "target_field": "content",
-    "query": "paste(id: 123) { content, content, content, content }",
-    "rationale": "Repeat a real field many times in one query.",
-    "expected_indicator": "High memory usage"
+    "query": "{ paste(id: 1) { content { paste(id: 2) { content } } } }",
+    "rationale": "Exploits real relationships to nest deeply and consume resources",
+    "expected_indicator": "high CPU usage"
   },
   {
-    "id": 3,
+    "id": "re_002",
+    "attack_class": "Field Duplication",
+    "target_type": "UserObject",
+    "target_field": "username",
+    "query": "{ me(token: \"test\") { username username username username username } }",
+    "rationale": "Repeats a real field to inflate server work",
+    "expected_indicator": "elevated response time"
+  },
+  {
+    "id": "re_003",
     "attack_class": "Aliased Query Flooding",
     "target_type": "Query",
-    "target_field": null,
-    "query": "a1: paste(id: 123), a2: paste(id: 456), a3: paste(id: 789)",
-    "rationale": "Request the same real entry point many times using GraphQL aliases.",
-    "expected_indicator": "High network traffic"
+    "target_field": "",
+    "query": "{ a1: paste(id: 1), a2: paste(id: 2), a3: paste(id: 3) }",
+    "rationale": "Floods the server with multiple queries using aliases",
+    "expected_indicator": "increased query count"
   },
   {
-    "id": 4,
+    "id": "re_004",
     "attack_class": "Nested Query Depth Abuse",
     "target_type": "UserObject",
-    "target_field": "pastes",
-    "query": "me(token: \"abc\") { user { pastes { id } } }",
-    "rationale": "Follow real relationships between UserObject and PasteObject to nest deeply.",
-    "expected_indicator": "High CPU usage"
+    "target_field": "",
+    "query": "{ me(token: \"test\") { username { users(id: 1) { username } } } }",
+    "rationale": "Exploits real relationships to nest deeply and consume resources",
+    "expected_indicator": "high CPU usage"
   },
   {
-    "id": 5,
+    "id": "re_005",
     "attack_class": "Field Duplication",
     "target_type": "AuditObject",
     "target_field": "gqloperation",
-    "query": "audits { gqloperation, gqloperation, gqloperation }",
-    "rationale": "Repeat a real field many times in one query.",
-    "expected_indicator": "High memory usage"
+    "query": "{ audits { gqloperation gqloperation gqloperation } }",
+    "rationale": "Repeats a real field to inflate server work",
+    "expected_indicator": "elevated response time"
   }
 ]

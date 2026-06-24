@@ -47,7 +47,7 @@ Respond ONLY with a valid JSON array. No explanation. No markdown. No code fence
 Each object must have exactly these keys: id, attack_class, target_type, target_field, query, rationale, expected_indicator.
 
 Example (format only; build real queries from the schema above):
-[{"id":"re_001","attack_class":"Field Duplication","query":"{ paste(id: 1) { content content content } }","rationale":"Repeats a real field to inflate work","expected_indicator":"elevated response time"}]
+[{{"id":"re_001","attack_class":"Field Duplication","target_type":"PasteObject","target_field":"content","query":"{{ paste(id: 1) {{ content content content }} }}","rationale":"Repeats a real field to inflate server work","expected_indicator":"elevated response time"}}]
 """
 
 def query_ollama(prompt: str) -> str:
